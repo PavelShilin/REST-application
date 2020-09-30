@@ -1,13 +1,17 @@
 package com.myProject.onlineShop.service;
 
+import com.myProject.onlineShop.model.Role;
 import com.myProject.onlineShop.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.myProject.onlineShop.repository.UserRepository;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-@Service
+@Service("UserService")
 public class UserService {
 
     private UserRepository userRepository;
@@ -32,4 +36,8 @@ public class UserService {
     public void deleteById(Long id) {
         userRepository.deleteById(id);
     }
+
+
+
+
 }
