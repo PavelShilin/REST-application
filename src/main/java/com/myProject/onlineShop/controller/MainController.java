@@ -1,9 +1,8 @@
 package com.myProject.onlineShop.controller;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.myProject.onlineShop.model.Role;
 import com.myProject.onlineShop.model.User;
+import com.myProject.onlineShop.repository.UserRepository;
 import com.myProject.onlineShop.service.RoleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,41 +13,47 @@ import org.springframework.web.bind.annotation.*;
 import com.myProject.onlineShop.service.UserService;
 
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping(value = "/users")
 public class MainController {
 
     private UserService userService;
+    private UserRepository userRepository;
 
     private RoleService roleService;
 
     @Autowired
-    public MainController(UserService userService) {
+    public MainController(UserService userService, RoleService roleService) {
         this.userService = userService;
+        this.roleService = roleService;
     }
+
 
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
-    public List<User> finedAll(Model model) {
-        List<User> users = userService.findAll();
-        // model.addAttribute("users", users);
-        return users;
+    public List<Map<Integer, String>> finedAll(Model model) {
+/*        System.out.println("======================" + userService.findUsers() + "===============================");
+        return userService.findUsers();*/
+        return userService.findByUsers();
     }
 
+
     @GetMapping(path = "/{id}", produces = "application/json")
-    public ResponseEntity<User> customUser(@PathVariable("id") Long id) {
+    public ResponseEntity<User> customUser(@PathVariable("id") Integer id) {
+        System.out.println("+++++++++++++++++++++++++++++++++++++++" + userService.findById(id).getLastName() + "++++++++++++++++++++++++++++++++++");
         User restUser = new User();
         restUser.setFirstName(userService.findById(id).getFirstName());
         restUser.setLastName(userService.findById(id).getLastName());
         restUser.setId(userService.findById(id).getId());
+        restUser.setRoles(userService.findById(id).getRoles());
+
         return new ResponseEntity<User>(restUser, HttpStatus.OK);
+
     }
 
     @DeleteMapping(value = "{id}", produces = "application/json")
-    public String deleteUser(@PathVariable("id") Long id) {
+    public String deleteUser(@PathVariable("id") Integer id) {
         try {
             userService.deleteById(id);
             return "true";
@@ -57,38 +62,78 @@ public class MainController {
         }
     }
 
-    @PostMapping(produces ={MediaType.APPLICATION_JSON_VALUE,
-                            MediaType.APPLICATION_XML_VALUE},
-                consumes = {MediaType.APPLICATION_JSON_VALUE,
-                            MediaType.APPLICATION_XML_VALUE})
-    public Map<String,String> createUser(@RequestBody User requestUserDetails) {
+
+    @PostMapping(produces = {MediaType.APPLICATION_JSON_VALUE,
+            MediaType.APPLICATION_XML_VALUE},
+            consumes = {MediaType.APPLICATION_JSON_VALUE,
+                    MediaType.APPLICATION_XML_VALUE})
+    public Map<String, String> createUser(@RequestBody User requestUserDetails) {
         User newUser = new User();
-        Map <String,String> mapResponse= new HashMap<>();
-        if (validateNameIsUpper(requestUserDetails.getFirstName())){
+        Map<String, String> mapResponse = new HashMap<>();
+        if (validateNameIsUpper(requestUserDetails.getFirstName())) {
             newUser.setFirstName(requestUserDetails.getFirstName());
-        }
-        else {
-            mapResponse.put("status","false");
-            mapResponse.put("Error","UpperCaseIsEmpty");
+        } else {
+            mapResponse.put("status", "false");
+            mapResponse.put("Error", "UpperCaseIsEmpty");
             return mapResponse;
         }
-        newUser.setFirstName(requestUserDetails.getFirstName());
+        List<Role> roleFromBD = new ArrayList<>();
+        roleFromBD = roleService.findAll();
+        boolean flag = false;
+        for (Role rol : requestUserDetails.getRoles()) {
+            for (Role rolBD : roleFromBD) {
+                if (rolBD.equals(rol)) {
+                    flag = true;
+                    break;
+                }
+            }
+            if (!flag) {
+                roleService.saveRole(rol);
+            } else {
+                flag = false;
+            }
+        }
         newUser.setFirstName(requestUserDetails.getFirstName());
         newUser.setLastName(requestUserDetails.getLastName());
+        newUser.setRoles(requestUserDetails.getRoles());
+
         userService.saveUser(newUser);
-
-        mapResponse.put("status","success");
-
+        mapResponse.put("status", "success");
         return mapResponse;
 
 
     }
 
-    @GetMapping(value = "Role", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
-    public List<Role> getAllRole(){
-        List<Role> role = roleService.findAllRole();
-        return role;
+    @GetMapping(value = "/ro", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
+    public List<Role> getAllRole() {
+        System.out.println("==================" + roleService.findAll() + "==================================");
+        return roleService.findAll();
     }
+
+    @GetMapping(value = "/test", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
+    public void testing() {
+        Role role = new Role();
+        role.setRole("Администратор1");
+        role.setId(30);
+        roleService.saveRole(role);
+
+        Set<Role> setRoles1 = new HashSet<>();
+        System.out.println("--------------------------------------" + setRoles1 + "-----------------------------------------");
+        User user = new User();
+        user.setFirstName("test0");
+        user.setLastName("test01");
+        user.setRoles(setRoles1);
+        userService.saveUser(user);
+
+    }
+
+/*   @GetMapping(path = "/ro/{id}", produces = "application/json")
+    public ResponseEntity<Role> customRole(@PathVariable("id") Integer id) {
+        Role restRole = new Role();
+        restRole.setRole(roleService.findByIdRole(id).getRole());
+        return new ResponseEntity<Role>(restRole, HttpStatus.OK);
+    }*/
+
 
     private boolean validateNameIsUpper(String name) {
         char[] temp = name.toCharArray();
@@ -99,6 +144,8 @@ public class MainController {
         }
         return false;
     }
+
+
 
 
 

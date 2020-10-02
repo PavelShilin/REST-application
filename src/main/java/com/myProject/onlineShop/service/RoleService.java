@@ -20,11 +20,14 @@ public class RoleService  {
     }
 
 
-    public List<Role> findAllRole() {
+    public List<Role> findAll() {
         return roleRepository.findAll();
     }
+/*    public String findByRole(Integer id) {
+        return roleRepository.findByRole(id);
+    }*/
 
-    public Role findByIdRole(Long id) {
+    public Role findByIdRole(Integer id) {
         return roleRepository.getOne(id);
     }
 

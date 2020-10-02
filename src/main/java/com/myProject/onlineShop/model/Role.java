@@ -1,41 +1,51 @@
 package com.myProject.onlineShop.model;
 
 import lombok.Data;
+import org.springframework.stereotype.Indexed;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
-@Data
+
 @Entity
 @Table(name = "role")
 public class Role {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Integer id;
 
     @Column(name = "role_name")
     private String role;
 
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "users_id")
-    private User user;
 
-    public User getUserRole() {
-        return user;
+    @ManyToMany(mappedBy = "roles")
+    private List<User> users1;
+
+
+/*    public List<User> getUsers() {
+        return users1;
+    }*/
+
+    public void setUsers(List<User> users) {
+        this.users1 = users;
     }
 
-    public void setUserRole(User userRole) {
-        this.user = userRole;
+    public Role() {
     }
 
-    public long getId() {
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
 
     public String getRole() {
         return role;
@@ -45,5 +55,25 @@ public class Role {
         this.role = role;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Role)) return false;
+        Role role1 = (Role) o;
+        return Objects.equals(role, role1.role);
+    }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(role);
+    }
+
+    @Override
+    public String toString() {
+        return "Role{" +
+                "id=" + id +
+                ", role='" + role + '\'' +
+                ", users1=" + users1 +
+                '}';
+    }
 }
